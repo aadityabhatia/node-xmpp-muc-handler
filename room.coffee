@@ -8,10 +8,35 @@ module.exports = class Room extends events.EventEmitter
 		@roster = {}
 
 	errorHandler: (stanza) ->
-		this.emit 'err', stanza: stanza
+		this.emit 'err',
+			error: stanza.getChild('error').getText()
+			stanza: stanza
+
+	messageHandler: (stanza) ->
+		nick = stanza.from.split("/")[1]
+		bodyElement = stanza.getChild('body')
+		if not bodyElement
+			@subject = stanza.getChild('subject')?.getText()
+			return if not @subject
+			@emit 'subject',
+				subject: @subject
+				nick: nick
+			return
+
+		if stanza.attrs.type is 'chat'
+			@emit 'privateMessage',
+				to: stanza.attrs.to
+				nick: nick
+				text: bodyElement.getText()
+			return
+
+		@emit 'groupMessage',
+			to: stanza.attrs.to
+			nick: nick
+			text: bodyElement.getText()
+			delay: stanza.getChild('delay')?.attrs.stamp
 
 	availableHandler: (stanza) ->
-		room = stanza.from.split("/")[0]
 		nick = stanza.from.split("/")[1]
 		statusElems = stanza.getChild('x')?.getChildren('status')
 		statusCodes = if statusElems then (parseInt(s.attrs.code) for s in statusElems) else []
@@ -22,7 +47,6 @@ module.exports = class Room extends events.EventEmitter
 			@roster[nick] = new User(nick)
 			if not selfPresence and @joined
 				this.emit 'joined',
-					room: room
 					nick: nick
 		else
 			this.emit 'status',
@@ -36,11 +60,9 @@ module.exports = class Room extends events.EventEmitter
 		if selfPresence and not @joined
 			@joined = true
 			this.emit 'rosterReady',
-				room: room
 				nick: nick
 
 	unavailableHandler: (stanza) ->
-		room = stanza.from.split("/")[0]
 		nick = stanza.from.split("/")[1]
 		statusElems = stanza.getChild('x')?.getChildren('status')
 		statusCodes = if statusElems then (parseInt(s.attrs.code) for s in statusElems) else []
@@ -50,7 +72,6 @@ module.exports = class Room extends events.EventEmitter
 			if selfPresence then @joined = false
 			delete @roster[nick]
 			this.emit 'kicked',
-				room: room
 				nick: nick
 				reason: stanza.getChild('x')?.getChild('item')?.getChild('reason')?.getText()
 				self: selfPresence
@@ -60,7 +81,6 @@ module.exports = class Room extends events.EventEmitter
 			if selfPresence then @joined = false
 			delete @roster[nick]
 			this.emit 'banned',
-				room: room
 				nick: nick
 				reason: stanza.getChild('x')?.getChild('item')?.getChild('reason')?.getText()
 				self: selfPresence
@@ -73,7 +93,6 @@ module.exports = class Room extends events.EventEmitter
 			@roster[newNick] = @roster[nick]
 			delete @roster[nick]
 			this.emit 'nickChange',
-				room: room
 				nick: nick
 				newNick: newNick
 				self: selfPresence
@@ -83,7 +102,6 @@ module.exports = class Room extends events.EventEmitter
 		if selfPresence then @joined = false
 		delete @roster[nick]
 		this.emit 'parted',
-			room: room
 			nick: nick
 			status: status or ""
 			self: selfPresence
