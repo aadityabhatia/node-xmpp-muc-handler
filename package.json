@@ -1,5 +1,5 @@
 {
-  "name": "node-muc-eventer",
+  "name": "xmpp-muc-handler",
   "version": "0.1.0",
   "description": "event emitting handler for XMPP MUCs",
   "main": "index.js",
@@ -8,7 +8,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/aadityabhatia/node-muc-eventer"
+    "url": "https://github.com/aadityabhatia/node-xmpp-muc-handler.git"
   },
   "keywords": [
     "XMPP",

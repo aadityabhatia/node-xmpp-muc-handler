@@ -1,15 +1,15 @@
 # XMPP MUC Eventer
 ## event emitting handler for XMPP MUCs
 
-node-muc-eventer is an event-emitting handler that processes message and presence stanzas from specified MUCs, maintains a roster, and emits events when activity takes place. It can be used as a middleware for [junction](https://github.com/jaredhanson/junction/#readme) XMPP framework.
+xmpp-muc-handler is an event-emitting handler that processes message and presence stanzas from specified MUCs, maintains a roster, and emits events when activity takes place. It can be used as a middleware for [junction](https://github.com/jaredhanson/junction/#readme) XMPP framework.
 
 ## Installation
 
-	npm install node-muc-eventer
+	npm install xmpp-muc-handler
 
 ## Usage
 ```
-MucHandler = require 'node-muc-eventer'
+MucHandler = require 'xmpp-muc-handler'
 mucHandler = new MucHandler()
 app.use junction.presenceParser()
 app.use junction.messageParser()
