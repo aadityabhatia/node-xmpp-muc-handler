@@ -44,14 +44,11 @@ module.exports = class Room extends events.EventEmitter
 
 		# if nick isn't already on the roster, add it and announce the arrival
 		if nick not of @roster
-			@roster[nick] = new User(nick)
+			@roster[nick] = new User(stanza)
 			if not selfPresence and @joined
-				this.emit 'joined',
-					nick: nick
+				this.emit 'joined', @roster[nick]
 		else
-			this.emit 'status',
-				show: stanza.show
-				status: stanza.status
+			this.emit 'status', @roster[nick].update(stanza)
 
 		if selfPresence
 			@nick = nick
@@ -59,8 +56,7 @@ module.exports = class Room extends events.EventEmitter
 		# this happens at the end of each join
 		if selfPresence and not @joined
 			@joined = true
-			this.emit 'rosterReady',
-				nick: nick
+			this.emit 'rosterReady', @roster[nick]
 
 	unavailableHandler: (stanza) ->
 		nick = stanza.from.split("/")[1]
