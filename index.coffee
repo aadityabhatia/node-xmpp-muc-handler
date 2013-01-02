@@ -31,12 +31,12 @@ module.exports = class MucHandler
 			when 'error' then room.errorHandler(stanza)
 			else room.availableHandler(stanza)
 
-	addRoom: (roomId, connection = @connection) ->
-		@rooms[roomId] = new Room(roomId, connection)
+	addRoom: (roomId) ->
+		@rooms[roomId] = new Room(roomId)
 
 	joinRoom: (roomId, nick, connection = @connection) ->
 		connection.send new junction.elements.Presence(roomId + "/" + nick)
-		return @addRoom(roomId, connection)
+		return @addRoom(roomId)
 
 	removeRoom: (roomId) ->
 		room = @rooms[roomId]

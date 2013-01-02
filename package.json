@@ -1,6 +1,6 @@
 {
   "name": "xmpp-muc-handler",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "description": "event emitting handler for XMPP MUCs",
   "main": "index.js",
   "scripts": {

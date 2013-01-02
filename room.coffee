@@ -8,21 +8,24 @@ Iq = junction.elements.IQ
 User = require './user'
 
 module.exports = class Room extends events.EventEmitter
-	constructor: (@roomId, @connection) ->
+	constructor: (@roomId) ->
 		events.EventEmitter.call(this)
 		@roster = {}
 
 	sendGroup: (message) ->
+		return if not @connection
 		msg = new Message(@roomId, 'groupchat')
 		msg.c('body', {}).t(message)
 		@connection.send msg
 
 	sendPrivate: (nick, message) ->
+		return if not @connection
 		msg = new Message(@roomId + '/' + nick, 'chat')
 		msg.c('body', {}).t(message)
 		@connection.send msg
 
 	setAffiliation: (nick, affiliation) ->
+		return if not @connection
 		return if nick not of @roster
 		return if ['none', 'member', 'admin', 'owner'].indexOf(affiliation) < 0
 		iq = new Iq(@roomId, 'set')
@@ -32,6 +35,7 @@ module.exports = class Room extends events.EventEmitter
 		@connection.send iq
 
 	setRole: (nick, role) ->
+		return if not @connection
 		return if nick not of @roster
 		return if ['none', 'visitor', 'participant', 'moderator'].indexOf(role) < 0
 		iq = new Iq(@roomId, 'set')
@@ -85,7 +89,7 @@ module.exports = class Room extends events.EventEmitter
 		# if nick isn't already on the roster, add it and announce the arrival
 		if nick not of @roster
 			@roster[nick] = new User(stanza)
-			if not selfPresence and @joined
+			if not selfPresence and @connection
 				this.emit 'joined', @roster[nick]
 		else
 			this.emit 'status', @roster[nick].update(stanza)
@@ -94,8 +98,8 @@ module.exports = class Room extends events.EventEmitter
 			@nick = nick
 
 		# this happens at the end of each join
-		if selfPresence and not @joined
-			@joined = true
+		if selfPresence and not @connection
+			@connection = stanza.connection
 			this.emit 'rosterReady', @roster[nick]
 
 	unavailableHandler: (stanza) ->
@@ -103,24 +107,6 @@ module.exports = class Room extends events.EventEmitter
 		statusElems = stanza.getChild('x')?.getChildren('status')
 		statusCodes = if statusElems then (parseInt(s.attrs.code) for s in statusElems) else []
 		selfPresence = statusCodes.indexOf(110) >= 0
-
-		if statusCodes.indexOf(307) >= 0
-			if selfPresence then @joined = false
-			delete @roster[nick]
-			this.emit 'kicked',
-				nick: nick
-				reason: stanza.getChild('x')?.getChild('item')?.getChild('reason')?.getText()
-				self: selfPresence
-			return
-
-		if statusCodes.indexOf(301) >= 0
-			if selfPresence then @joined = false
-			delete @roster[nick]
-			this.emit 'banned',
-				nick: nick
-				reason: stanza.getChild('x')?.getChild('item')?.getChild('reason')?.getText()
-				self: selfPresence
-			return
 
 		if statusCodes.indexOf(303) >= 0
 			newNick = stanza.getChild('x')?.getChild('item')?.attrs.nick
@@ -134,8 +120,25 @@ module.exports = class Room extends events.EventEmitter
 				self: selfPresence
 			return
 
-		status = Strophe.getText(statusElems[0]) if statusElems.length > 0
-		if selfPresence then @joined = false
+		if selfPresence then delete @connection
+
+		if statusCodes.indexOf(307) >= 0
+			delete @roster[nick]
+			this.emit 'kicked',
+				nick: nick
+				reason: stanza.getChild('x')?.getChild('item')?.getChild('reason')?.getText()
+				self: selfPresence
+			return
+
+		if statusCodes.indexOf(301) >= 0
+			delete @roster[nick]
+			this.emit 'banned',
+				nick: nick
+				reason: stanza.getChild('x')?.getChild('item')?.getChild('reason')?.getText()
+				self: selfPresence
+			return
+
+		status = statusElems[0].getText() if statusElems.length > 0
 		delete @roster[nick]
 		this.emit 'parted',
 			nick: nick
