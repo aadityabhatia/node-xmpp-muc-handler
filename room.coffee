@@ -26,7 +26,7 @@ module.exports = class Room extends events.EventEmitter
 		return if nick not of @roster
 		return if ['none', 'member', 'admin', 'owner'].indexOf(affiliation) < 0
 		iq = new Iq(@roomId, 'set')
-		iq.c('query', {}).c 'item',
+		iq.c('query', {xmlns: 'http://jabber.org/protocol/muc#admin'}).c 'item',
 			jid: @roster[nick].jid.split('/')[0]
 			affiliation: affiliation
 		@connection.send iq
@@ -35,7 +35,7 @@ module.exports = class Room extends events.EventEmitter
 		return if nick not of @roster
 		return if ['none', 'visitor', 'participant', 'moderator'].indexOf(role) < 0
 		iq = new Iq(@roomId, 'set')
-		iq.c('query', {}).c 'item',
+		iq.c('query', {xmlns: 'http://jabber.org/protocol/muc#admin'}).c 'item',
 			nick: nick
 			role: role
 		@connection.send iq
