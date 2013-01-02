@@ -40,6 +40,13 @@ module.exports = class Room extends events.EventEmitter
 			role: role
 		@connection.send iq
 
+	part: (message) ->
+		return if not @connection
+		presence = new Presence(@roomId, 'unavailable')
+		if message
+			presence.c('status', {}).t(message)
+		@connection.send presence
+
 	errorHandler: (stanza) ->
 		this.emit 'err',
 			error: stanza.getChild('error').getText()
