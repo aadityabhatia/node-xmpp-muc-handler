@@ -2,8 +2,11 @@ Room = require './room'
 util = require 'util'
 
 module.exports = class MucHandler
-	constructor: ->
+	constructor: (@connection) ->
 		@rooms = {}
+
+	setConnection: (connection) ->
+		@connection = connection
 
 	handle: (stanza, res, next) ->
 		roomId = stanza.from.split("/")[0]
@@ -21,13 +24,14 @@ module.exports = class MucHandler
 		next()
 
 	handlePresence: (room, stanza) ->
+		@connection ?= stanza.connection
 		switch stanza.attrs.type
 			when 'unavailable' then room.unavailableHandler(stanza)
 			when 'error' then room.errorHandler(stanza)
 			else room.availableHandler(stanza)
 
-	addRoom: (roomId) ->
-		@rooms[roomId] = new Room(roomId)
+	addRoom: (roomId, connection = @connection) ->
+		@rooms[roomId] = new Room(roomId, connection)
 
 	removeRoom: (roomId) ->
 		room = @rooms[roomId]

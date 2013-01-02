@@ -1,11 +1,44 @@
 events = require 'events'
 util = require 'util'
+junction = require 'junction'
+Message = junction.elements.Message
+Presence = junction.elements.Presence
+Iq = junction.elements.IQ
+
 User = require './user'
 
 module.exports = class Room extends events.EventEmitter
-	constructor: (@roomId) ->
+	constructor: (@roomId, @connection) ->
 		events.EventEmitter.call(this)
 		@roster = {}
+
+	sendGroup: (message) ->
+		msg = new Message(@roomId, 'groupchat')
+		msg.c('body', {}).t(message)
+		@connection.send msg
+
+	sendPrivate: (nick, message) ->
+		msg = new Message(@roomId + '/' + nick, 'chat')
+		msg.c('body', {}).t(message)
+		@connection.send msg
+
+	setAffiliation: (nick, affiliation) ->
+		return if nick not of @roster
+		return if ['none', 'member', 'admin', 'owner'].indexOf(affiliation) < 0
+		iq = new Iq(@roomId, 'set')
+		iq.c('query', {}).c 'item',
+			jid: @roster[nick].jid.split('/')[0]
+			affiliation: affiliation
+		@connection.send iq
+
+	setRole: (nick, role) ->
+		return if nick not of @roster
+		return if ['none', 'visitor', 'participant', 'moderator'].indexOf(role) < 0
+		iq = new Iq(@roomId, 'set')
+		iq.c('query', {}).c 'item',
+			nick: nick
+			role: role
+		@connection.send iq
 
 	errorHandler: (stanza) ->
 		this.emit 'err',
