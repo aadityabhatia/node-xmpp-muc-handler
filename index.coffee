@@ -1,5 +1,6 @@
-Room = require './room'
 util = require 'util'
+junction = require 'junction'
+Room = require './room'
 
 module.exports = class MucHandler
 	constructor: (@connection) ->
@@ -32,6 +33,10 @@ module.exports = class MucHandler
 
 	addRoom: (roomId, connection = @connection) ->
 		@rooms[roomId] = new Room(roomId, connection)
+
+	joinRoom: (roomId, nick, connection = @connection) ->
+		connection.send new junction.elements.Presence(roomId + "/" + nick)
+		return @addRoom(roomId, connection)
 
 	removeRoom: (roomId) ->
 		room = @rooms[roomId]
