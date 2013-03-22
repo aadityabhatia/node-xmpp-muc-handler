@@ -11,6 +11,7 @@ module.exports = class Room extends events.EventEmitter
 	constructor: (@roomId) ->
 		events.EventEmitter.call(this)
 		@roster = {}
+		@jids = {}
 
 	sendGroup: (message) ->
 		return if not @connection
@@ -87,8 +88,11 @@ module.exports = class Room extends events.EventEmitter
 		selfPresence = statusCodes.indexOf(110) >= 0
 
 		# if nick isn't already on the roster, add it and announce the arrival
-		if nick not of @roster
-			@roster[nick] = new User(stanza)
+		if user not of @roster
+			user = new User(stanza)
+			@roster[nick] = user
+			if user.jid
+				@jids[user.jid.split("/",1)[0]] = user
 			if not selfPresence and @connection
 				this.emit 'joined', @roster[nick]
 		else
@@ -139,6 +143,9 @@ module.exports = class Room extends events.EventEmitter
 			return
 
 		status = statusElems[0].getText() if statusElems.length > 0
+		user = @roster[nick]
+		if user.jid
+			delete @jids[user.jid.split("/",1)[0]]
 		delete @roster[nick]
 		this.emit 'parted',
 			nick: nick
