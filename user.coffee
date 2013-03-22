@@ -9,11 +9,11 @@ module.exports = class User
 		@status = stanza.getChild('status')?.getText()
 		@priority = parseInt(stanza.getChild('priority')?.getText())
 
-		item = stanza.getChild('x')?.getChild('item')
-		if item
-			@affiliation = item.attrs.affiliation
-			@role = item.attrs.role
-			@jid = item.attrs.jid
+		for x in stanza.getChildren('x')
+			for item in x.getChildren('item')
+				@affiliation ?= item.attrs.affiliation
+				@role ?= item.attrs.role
+				@jid ?= item.attrs.jid
 
 		this
 
