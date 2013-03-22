@@ -145,3 +145,4 @@ module.exports = class Room extends events.EventEmitter
 			status: status or ""
 			self: selfPresence
 
+#  vim: tabstop=4:softtabstop=4:shiftwidth=4:noexpandtab
