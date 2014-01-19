@@ -28,8 +28,8 @@ var roomId = "test@example.com"
 
 var connection = client.connect(xmppOptions).on('online', function() {
 
-	this.send(new junction.elements.Presence(roomId + "/BotTest"));
-	var room = mucHandler.addRoom(roomId);
+	mucHandler.setConnection(this);
+	var room = mucHandler.joinRoom(roomId, "BotNick");
 
 	room.on('rosterReady', function(data) {
 		console.log("Roster: " + JSON.stringify(this.roster));
@@ -41,6 +41,9 @@ var connection = client.connect(xmppOptions).on('online', function() {
 
 	room.on('groupMessage', function(data) {
 		console.log("<" + data.nick + "> " + data.text);
+		if(!data.delay && data.text === 'part') {
+			mucHandler.partRoom(this.roomId);
+		}
 	});
 
 	room.on('joined', function(data) {
