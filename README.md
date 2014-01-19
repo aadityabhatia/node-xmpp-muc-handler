@@ -1,7 +1,7 @@
-# XMPP MUC Eventer
-## event emitting handler for XMPP MUCs
+# XMPP MUC Handler
+## event-based API for XMPP Multi-User Chats
 
-xmpp-muc-handler is an event-emitting handler that processes message and presence stanzas from specified MUCs, maintains a roster, and emits events when activity takes place. It can be used as a middleware for [junction](https://github.com/jaredhanson/junction/#readme) XMPP framework.
+xmpp-muc-handler provides a simple event-based API to access [XMPP Multi-User Chats](http://xmpp.org/extensions/xep-0045.html). It processes message and presence stanzas from MUCs, maintains rosters, and emits events for any message or presence stanza received. It can be used as a middleware for [junction](https://github.com/jaredhanson/junction/#readme) XMPP framework.
 
 ## Installation
 
@@ -58,7 +58,7 @@ var connection = client.connect(xmppOptions).on('online', function() {
 ```
 ## License
 
-	Copyright 2012 Aaditya Bhatia
+	Copyright 2014 Aaditya Bhatia
 
 	Licensed under the Apache License, Version 2.0 (the "License");
 	you may not use this file except in compliance with the License.
