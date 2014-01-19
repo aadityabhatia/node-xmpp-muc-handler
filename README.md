@@ -9,22 +9,52 @@ xmpp-muc-handler is an event-emitting handler that processes message and presenc
 
 ## Usage
 ```
-MucHandler = require 'xmpp-muc-handler'
-mucHandler = new MucHandler()
-app.use junction.presenceParser()
-app.use junction.messageParser()
-app.use mucHandler
+var MucHandler = require('xmpp-muc-handler');
+var junction = require('junction');
+var mucHandler = new MucHandler();
 
-connection = client.connect(xmppOptions).on 'online', ->
-	room = mucHandler.addRoom bareMucJid
-	room.on 'rosterReady', (data) ->
-		util.log "Roster: " + JSON.stringify @roster
-	room.on 'joined', (data) ->
-		util.log "Joined: " + data.nick
-	room.on 'parted', (data) ->
-		util.log "Parted: " + data.nick
-	room.on 'nickChange', (data) ->
-		util.log "NickChange: #{data.nick} to #{data.newNick}"
+var client = junction();
+client.use(junction.presenceParser());
+client.use(junction.messageParser());
+client.use(mucHandler);
+
+var xmppOptions = {
+	type: 'client',
+	jid: "bot@example.com",
+	password: "safe"
+};
+
+var roomId = "test@example.com"
+
+var connection = client.connect(xmppOptions).on('online', function() {
+
+	this.send(new junction.elements.Presence(roomId + "/BotTest"));
+	var room = mucHandler.addRoom(roomId);
+
+	room.on('rosterReady', function(data) {
+		console.log("Roster: " + JSON.stringify(this.roster));
+	});
+
+	room.on('subject', function(data) {
+		console.log("Subject: " + data.subject);
+	});
+
+	room.on('groupMessage', function(data) {
+		console.log("<" + data.nick + "> " + data.text);
+	});
+
+	room.on('joined', function(data) {
+		console.log("Joined: " + data.nick);
+	});
+
+	room.on('parted', function(data) {
+		console.log("Parted: " + data.nick);
+	});
+
+	room.on('nickChange', function(data) {
+		console.log("NickChange: " + data.nick + " to " + data.newNick);
+	});
+});
 ```
 ## License
 
