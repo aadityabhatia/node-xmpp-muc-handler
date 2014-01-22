@@ -85,10 +85,12 @@ module.exports = class Room extends events.EventEmitter
 			return
 
 		@emit 'groupMessage',
+			id: stanza.attrs.id
 			to: stanza.attrs.to
 			nick: nick
 			text: bodyElement.getText()
 			delay: stanza.getChild('delay')?.attrs.stamp
+			stanza: stanza
 
 	availableHandler: (stanza) ->
 		nick = stanza.from.split("/")[1]
