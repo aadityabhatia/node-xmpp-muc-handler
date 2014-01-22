@@ -13,6 +13,15 @@ module.exports = class Room extends events.EventEmitter
 		@roster = {}
 		@jids = {}
 
+	updateJids: () ->
+		temp = {}
+		for nick, user of @roster
+			if user.jid
+				jid = user.jid.split("/",1)[0]
+				if jid not of temp
+					temp[jid] = user
+		@jids = temp
+
 	sendGroup: (message) ->
 		return if not @connection
 		msg = new Message(@roomId, 'groupchat')
@@ -88,11 +97,14 @@ module.exports = class Room extends events.EventEmitter
 		selfPresence = statusCodes.indexOf(110) >= 0
 
 		# if nick isn't already on the roster, add it and announce the arrival
-		if user not of @roster
+		if nick not of @roster
 			user = new User(stanza)
+			user.nick = nick
 			@roster[nick] = user
 			if user.jid
-				@jids[user.jid.split("/",1)[0]] = user
+				jid = user.jid.split("/",1)[0]
+				if jid not of @jids
+					@jids[jid] = user
 			if not selfPresence and @connection
 				this.emit 'joined', @roster[nick]
 		else
@@ -143,12 +155,13 @@ module.exports = class Room extends events.EventEmitter
 			return
 
 		status = statusElems[0].getText() if statusElems.length > 0
-		user = @roster[nick]
-		if user.jid
-			delete @jids[user.jid.split("/",1)[0]]
+		jid = @roster[nick].jid
 		delete @roster[nick]
+		if jid
+			@updateJids()
 		this.emit 'parted',
 			nick: nick
+			jid: jid
 			status: status or ""
 			self: selfPresence
 
