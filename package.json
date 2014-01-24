@@ -1,7 +1,7 @@
 {
   "name": "xmpp-muc-handler",
-  "version": "0.3.3",
-  "description": "event emitting handler for XMPP MUCs",
+  "version": "0.4.0",
+  "description": "event-based API for XMPP Multi-User Chats",
   "main": "index.js",
   "scripts": {
     "prepublish": "coffee -c ."

@@ -31,12 +31,18 @@ module.exports = class MucHandler
 			when 'error' then room.errorHandler(stanza)
 			else room.availableHandler(stanza)
 
+	joinRoom: (roomId, nick) ->
+		if not @connection
+			return console.error "No connection found. Call mucHandler.setConnection() to provide a connection object."
+		@connection.send new junction.elements.Presence(roomId + "/" + nick)
+		@addRoom(roomId)
+
 	addRoom: (roomId) ->
 		@rooms[roomId] = new Room(roomId)
 
-	joinRoom: (roomId, nick, connection = @connection) ->
-		connection.send new junction.elements.Presence(roomId + "/" + nick)
-		return @addRoom(roomId)
+	partRoom: (roomId) ->
+		@rooms[roomId].part()
+		@removeRoom(room.roomId)
 
 	removeRoom: (roomId) ->
 		room = @rooms[roomId]

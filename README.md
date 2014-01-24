@@ -1,7 +1,7 @@
-# XMPP MUC Eventer
-## event emitting handler for XMPP MUCs
+# XMPP MUC Handler
+## event-based API for XMPP Multi-User Chats
 
-xmpp-muc-handler is an event-emitting handler that processes message and presence stanzas from specified MUCs, maintains a roster, and emits events when activity takes place. It can be used as a middleware for [junction](https://github.com/jaredhanson/junction/#readme) XMPP framework.
+xmpp-muc-handler provides a simple event-based API to access [XMPP Multi-User Chats](http://xmpp.org/extensions/xep-0045.html). It processes message and presence stanzas from MUCs, maintains rosters, and emits events for any message or presence stanza received. It can be used as a middleware for [junction](https://github.com/jaredhanson/junction/#readme) XMPP framework.
 
 ## Installation
 
@@ -9,26 +9,59 @@ xmpp-muc-handler is an event-emitting handler that processes message and presenc
 
 ## Usage
 ```
-MucHandler = require 'xmpp-muc-handler'
-mucHandler = new MucHandler()
-app.use junction.presenceParser()
-app.use junction.messageParser()
-app.use mucHandler
+var MucHandler = require('xmpp-muc-handler');
+var junction = require('junction');
+var mucHandler = new MucHandler();
 
-connection = client.connect(xmppOptions).on 'online', ->
-	room = mucHandler.addRoom bareMucJid
-	room.on 'rosterReady', (data) ->
-		util.log "Roster: " + JSON.stringify @roster
-	room.on 'joined', (data) ->
-		util.log "Joined: " + data.nick
-	room.on 'parted', (data) ->
-		util.log "Parted: " + data.nick
-	room.on 'nickChange', (data) ->
-		util.log "NickChange: #{data.nick} to #{data.newNick}"
+var client = junction();
+client.use(junction.presenceParser());
+client.use(junction.messageParser());
+client.use(mucHandler);
+
+var xmppOptions = {
+	type: 'client',
+	jid: "bot@example.com",
+	password: "safe"
+};
+
+var roomId = "test@example.com"
+
+var connection = client.connect(xmppOptions).on('online', function() {
+
+	mucHandler.setConnection(this);
+	var room = mucHandler.joinRoom(roomId, "BotNick");
+
+	room.on('rosterReady', function(data) {
+		console.log("Roster: " + JSON.stringify(this.roster));
+	});
+
+	room.on('subject', function(data) {
+		console.log("Subject: " + data.subject);
+	});
+
+	room.on('groupMessage', function(data) {
+		console.log("<" + data.nick + "> " + data.text);
+		if(!data.delay && data.text === 'part') {
+			mucHandler.partRoom(this.roomId);
+		}
+	});
+
+	room.on('joined', function(data) {
+		console.log("Joined: " + data.nick);
+	});
+
+	room.on('parted', function(data) {
+		console.log("Parted: " + data.nick);
+	});
+
+	room.on('nickChange', function(data) {
+		console.log("NickChange: " + data.nick + " to " + data.newNick);
+	});
+});
 ```
 ## License
 
-	Copyright 2012 Aaditya Bhatia
+	Copyright 2014 Aaditya Bhatia
 
 	Licensed under the Apache License, Version 2.0 (the "License");
 	you may not use this file except in compliance with the License.
