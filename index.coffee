@@ -49,3 +49,4 @@ module.exports = class MucHandler
 		delete @rooms[roomId]
 		room
 
+#  vim: tabstop=4:softtabstop=4:shiftwidth=4:noexpandtab

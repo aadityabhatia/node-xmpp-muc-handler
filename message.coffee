@@ -4,3 +4,4 @@ module.exports = class Message
 		for key, value of object
 			this[key] = value
 
+#  vim: tabstop=4:softtabstop=4:shiftwidth=4:noexpandtab

@@ -11,6 +11,16 @@ module.exports = class Room extends events.EventEmitter
 	constructor: (@roomId) ->
 		events.EventEmitter.call(this)
 		@roster = {}
+		@jids = {}
+
+	updateJids: () ->
+		temp = {}
+		for nick, user of @roster
+			if user.jid
+				jid = user.jid.split("/",1)[0]
+				if jid not of temp
+					temp[jid] = user
+		@jids = temp
 
 	sendGroup: (message) ->
 		return if not @connection
@@ -75,10 +85,12 @@ module.exports = class Room extends events.EventEmitter
 			return
 
 		@emit 'groupMessage',
+			id: stanza.attrs.id
 			to: stanza.attrs.to
 			nick: nick
 			text: bodyElement.getText()
 			delay: stanza.getChild('delay')?.attrs.stamp
+			stanza: stanza
 
 	availableHandler: (stanza) ->
 		nick = stanza.from.split("/")[1]
@@ -88,7 +100,13 @@ module.exports = class Room extends events.EventEmitter
 
 		# if nick isn't already on the roster, add it and announce the arrival
 		if nick not of @roster
-			@roster[nick] = new User(stanza)
+			user = new User(stanza)
+			user.nick = nick
+			@roster[nick] = user
+			if user.jid
+				jid = user.jid.split("/",1)[0]
+				if jid not of @jids
+					@jids[jid] = user
 			if not selfPresence and @connection
 				this.emit 'joined', @roster[nick]
 		else
@@ -139,9 +157,14 @@ module.exports = class Room extends events.EventEmitter
 			return
 
 		status = statusElems[0].getText() if statusElems.length > 0
+		jid = @roster[nick].jid
 		delete @roster[nick]
+		if jid
+			@updateJids()
 		this.emit 'parted',
 			nick: nick
+			jid: jid
 			status: status or ""
 			self: selfPresence
 
+#  vim: tabstop=4:softtabstop=4:shiftwidth=4:noexpandtab
